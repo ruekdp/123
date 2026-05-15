@@ -1,5 +1,6 @@
 const ALEM_API_URL = 'https://llm.alem.ai/v1/chat/completions';
-const ALEM_API_TOKEN = 'sk-I8agzhli09Od5WbFynXkyA'; // Fixed: started with uppercase I, not lowercase l
+// Support both Vite (frontend) and Node.js (bot) environment variables
+const ALEM_API_TOKEN = import.meta.env?.VITE_ALEM_API_TOKEN || process.env.ALEM_API_TOKEN;
 
 export const getGiftRecommendations = async (personData) => {
   const { name, age, relationship, occasion, interests, loveLanguage, budget, lang = 'ru' } = personData;

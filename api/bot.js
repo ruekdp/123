@@ -1,10 +1,10 @@
 import { Telegraf, session, Markup } from 'telegraf';
-import * as dotenv from 'dotenv';
-import { getGiftRecommendations } from './src/api/alemPlus.js';
+import { getGiftRecommendations } from '../src/api/alemPlus.js';
 
-dotenv.config();
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
-const bot = new Telegraf(process.env.BOT_TOKEN || '8615950148:AAH1w6aaeZxDuY4diwV8sE0r4_oyen2Xxi8');
+// Using session middleware - note that this memory session won't persist across serverless calls
+// For production with many users, consider using a database (Redis/MongoDB) for sessions.
 bot.use(session());
 
 const TRANSLATIONS = {
@@ -148,7 +148,6 @@ bot.on('text', async (ctx) => {
       
       try {
         const result = await getGiftRecommendations({ ...ctx.session.data, lang: ctx.session.lang });
-        // Split results into individual gifts by "ПОДАРОК:" (case insensitive)
         const giftBlocks = result.split(/ПОДАРОК:|СЫЙЛЫҚ:|GIFT:/i).filter(b => b.trim().length > 10);
         
         for (const block of giftBlocks) {
@@ -188,6 +187,7 @@ bot.on('text', async (ctx) => {
         }
         await ctx.reply(t.done);
       } catch (error) {
+        console.error('Bot processing error:', error);
         ctx.reply(t.error);
       }
       ctx.session = null;
@@ -195,5 +195,13 @@ bot.on('text', async (ctx) => {
   }
 });
 
-bot.launch();
-console.log('Bot is running with Multi-language support...');
+// Export the serverless function handler
+export default async (request, response) => {
+  try {
+    // This allows Vercel to handle the bot as a webhook
+    await bot.handleUpdate(request.body, response);
+  } catch (error) {
+    console.error('Webhook error:', error);
+    response.status(500).send('Error handling update');
+  }
+};
