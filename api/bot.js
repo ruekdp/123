@@ -198,8 +198,12 @@ bot.on('text', async (ctx) => {
 // Export the serverless function handler
 export default async (request, response) => {
   try {
-    // This allows Vercel to handle the bot as a webhook
-    await bot.handleUpdate(request.body, response);
+    if (request.method === 'POST') {
+      await bot.handleUpdate(request.body);
+      response.status(200).send('OK');
+    } else {
+      response.status(200).send('Bot is active. Use POST for webhooks.');
+    }
   } catch (error) {
     console.error('Webhook error:', error);
     response.status(500).send('Error handling update');
